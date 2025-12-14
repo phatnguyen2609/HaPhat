@@ -1,0 +1,1697 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HabitPomodoro Miniapp</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- React -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+  <!-- Babel -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .glass { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 font-sans">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useEffect, useMemo, useRef, useState } = React;
+
+    // ===========================
+    // Sound Assets (Base64 Beep)
+    // ===========================
+    // Tiếng bíp điện tử ngắn, nhẹ nhàng, không cần tải từ mạng
+    const BEEP_SOUND = "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWgAAAA0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABYaW5nAAAAEAAAAAEAAABwAAIcHR8gISOkpKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKy//uQZAAAAAAAABAAAAAAAAAAAdJ8AAAAAAAAAAAAAAP/7kGQAAAAAAAABAAAAAAAAAAAdJ8AAAAAAAAAAAAAA//uQZAAAAAAAABAAAAAAAAAAAdJ8AAAAAAAAAAAAAA//uQZAAAAAAAABAAAAAAAAAAAdJ8AAAAAAAAAAAAAA//uQZAAAAAAAABAAAAAAAAAAAdJ8AAAAAAAAAAAAAA//uQZAAAAAAAABAAAAAAAAAAAdJ8AAAAAAAAAAAAAA//uQZAAAAAAAABAAAAAAAAAAAdJ8AAAAAAAAAAAAAA//uQZAAABiM8WAA08AAADI54sBp4AAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA//uQZAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA//uQZAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA//uQZAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA//uQZAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA//uQZAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA//uQZAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA//uQZAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA//uQZAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA//uQZAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA//uQZAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA//uQZAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA//uQZAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA//uQZAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA//uQZAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA//uQZAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA//uQZAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA//uQZAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA//uQZAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA//uQZAABjM8WAA08AAADI54sBp4AAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA";
+
+    const playNotification = () => {
+      try {
+        const audio = new Audio(BEEP_SOUND);
+        audio.volume = 1.0;
+        audio.play().catch(e => console.warn("Audio autoplay blocked by browser:", e));
+      } catch (e) {
+        console.error("Audio error", e);
+      }
+    };
+
+    // ===========================
+    // Helpers
+    // ===========================
+    const uid = () => Math.random().toString(36).slice(2, 11);
+    const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+
+    const pad2 = (n) => String(n).padStart(2, "0");
+    const toDateKey = (d = new Date()) => {
+      const y = d.getFullYear();
+      const m = pad2(d.getMonth() + 1);
+      const day = pad2(d.getDate());
+      return `${y}-${m}-${day}`;
+    };
+    const parseDateKey = (key) => {
+      const [y,m,d] = key.split("-").map(Number);
+      return new Date(y, (m||1)-1, d||1);
+    };
+    const addDaysKey = (key, delta) => {
+      const d = parseDateKey(key);
+      d.setDate(d.getDate() + delta);
+      return toDateKey(d);
+    };
+    const lastNDaysKeys = (n, endKey = toDateKey()) => {
+      const keys = [];
+      for (let i = n - 1; i >= 0; i--) keys.push(addDaysKey(endKey, -i));
+      return keys;
+    };
+
+    const formatSeconds = (s) => {
+      s = Math.max(0, Math.floor(s));
+      const mm = Math.floor(s / 60);
+      const ss = s % 60;
+      return `${pad2(mm)}:${pad2(ss)}`;
+    };
+
+    const safeJSONParse = (str, fallback) => {
+      try { return JSON.parse(str); } catch { return fallback; }
+    };
+
+    // ===========================
+    // Image compression (Smart 1:1 Crop)
+    // ===========================
+    async function compressImageFile(file, opts = {}) {
+      const {
+        // Target 800px là đủ nét cho màn hình điện thoại mà vẫn nhẹ
+        targetSize = 800,
+        // Quality 0.8 giữ chi tiết tốt hơn 0.72 mà file vẫn nhỏ do đã crop
+        quality = 0.8, 
+        mime = "image/jpeg"
+      } = opts;
+
+      const dataURL = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result);
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+
+      const img = await new Promise((resolve, reject) => {
+        const i = new Image();
+        i.onload = () => resolve(i);
+        i.onerror = reject;
+        i.src = dataURL;
+      });
+
+      const w = img.naturalWidth || img.width;
+      const h = img.naturalHeight || img.height;
+
+      // 1. Tính toán vùng crop (Center Crop - 1:1)
+      const minSide = Math.min(w, h);
+      const sx = (w - minSide) / 2;
+      const sy = (h - minSide) / 2;
+
+      // 2. Tính kích thước output (không upscale nếu ảnh gốc nhỏ hơn target)
+      const outSize = Math.min(targetSize, minSide);
+
+      const canvas = document.createElement("canvas");
+      canvas.width = outSize;
+      canvas.height = outSize;
+      const ctx = canvas.getContext("2d");
+
+      // Fill trắng để tránh lỗi transparent png -> jpeg bị đen
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, outSize, outSize);
+
+      // Vẽ phần center crop vào canvas vuông
+      ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, outSize, outSize);
+
+      const out = canvas.toDataURL(mime, quality);
+      return out;
+    }
+
+    // ===========================
+    // GitHub Gist Sync (mini-server)
+    // ===========================
+    const GH = {
+      fileName: "habit_pomo_data.json",
+      description: "HabitPomodoro sync data (secret gist)",
+      tokenKey: "hp_gh_token",
+      gistIdKey: "hp_gh_gist_id",
+      autosyncKey: "hp_gh_autosync",
+      includePhotosKey: "hp_gh_include_photos",
+    };
+
+    async function ghFetchJson(url, token, options = {}) {
+      const res = await fetch(url, {
+        ...options,
+        headers: {
+          "Accept": "application/vnd.github+json",
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+          ...(options.headers || {})
+        }
+      });
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(`GitHub ${res.status}: ${txt || res.statusText}`);
+      }
+      return await res.json();
+    }
+
+    async function ghEnsureGistId(token) {
+      const savedId = localStorage.getItem(GH.gistIdKey);
+      if (savedId) return savedId;
+
+      // find gist by filename
+      const gists = await ghFetchJson("https://api.github.com/gists?per_page=100", token, { method: "GET" });
+      const found = Array.isArray(gists) ? gists.find(g => g?.files && g.files[GH.fileName]) : null;
+      if (found?.id) {
+        localStorage.setItem(GH.gistIdKey, found.id);
+        return found.id;
+      }
+
+      // create new secret gist
+      const created = await ghFetchJson("https://api.github.com/gists", token, {
+        method: "POST",
+        body: JSON.stringify({
+          description: GH.description,
+          public: false,
+          files: { [GH.fileName]: { content: "null" } }
+        })
+      });
+      if (created?.id) localStorage.setItem(GH.gistIdKey, created.id);
+      return created?.id || null;
+    }
+
+    async function ghLoadData(token) {
+      const gistId = await ghEnsureGistId(token);
+      if (!gistId) throw new Error("Không tạo/tìm được Gist.");
+
+      const gist = await ghFetchJson(`https://api.github.com/gists/${gistId}`, token, { method: "GET" });
+      const file = gist?.files?.[GH.fileName];
+      if (!file) return null;
+
+      if (typeof file.content === "string" && !file.truncated) {
+        return safeJSONParse(file.content, null);
+      }
+
+      if (file.raw_url) {
+        const rawRes = await fetch(file.raw_url, { headers: { "Authorization": `Bearer ${token}` } });
+        const text = await rawRes.text();
+        return safeJSONParse(text, null);
+      }
+
+      return null;
+    }
+
+    async function ghSaveData(token, dataObj) {
+      const gistId = await ghEnsureGistId(token);
+      if (!gistId) throw new Error("Không tạo/tìm được Gist.");
+
+      const content = JSON.stringify(dataObj, null, 2);
+      await ghFetchJson(`https://api.github.com/gists/${gistId}`, token, {
+        method: "PATCH",
+        body: JSON.stringify({ files: { [GH.fileName]: { content } } })
+      });
+      return true;
+    }
+
+    // ===========================
+    // Data model + normalization
+    // ===========================
+    const DEFAULT_SETTINGS = {
+      focusMin: 25,
+      breakMin: 5,
+      longBreakMin: 15,
+      cyclesBeforeLongBreak: 4,
+      autoStartNext: false,
+      countPartialFocus: true,
+    };
+
+    function makeDefaultHabit() {
+      return {
+        id: uid(),
+        name: "Học / Focus",
+        targetMinutes: 45,  // quy tắc: đủ X phút/ngày mới complete
+        emoji: "📚",
+        active: true
+      };
+    }
+
+    function normalizeAppData(raw) {
+      const base = {
+        habits: [makeDefaultHabit()],
+        logs: {},       // logs[dateKey][habitId] = { minutes, sessions[], photoIds[] }
+        photos: {},     // photos[photoId] = { id, dateKey, habitId, dataUrl, caption, createdAt }
+        settings: { ...DEFAULT_SETTINGS },
+        ui: { selectedHabitId: null }
+      };
+
+      if (!raw || typeof raw !== "object") return base;
+
+      const habits = Array.isArray(raw.habits) ? raw.habits.map(h => ({
+        id: h?.id || uid(),
+        name: (h?.name ?? "Habit").toString(),
+        targetMinutes: clamp(Number(h?.targetMinutes ?? 30), 1, 1440),
+        emoji: (h?.emoji ?? "✅").toString().slice(0, 3),
+        active: h?.active !== false
+      })) : base.habits;
+
+      const logs = (raw.logs && typeof raw.logs === "object") ? raw.logs : {};
+      const photos = (raw.photos && typeof raw.photos === "object") ? raw.photos : {};
+      const settings = { ...DEFAULT_SETTINGS, ...(raw.settings || {}) };
+      settings.focusMin = clamp(Number(settings.focusMin || 25), 1, 180);
+      settings.breakMin = clamp(Number(settings.breakMin || 5), 1, 60);
+      settings.longBreakMin = clamp(Number(settings.longBreakMin || 15), 1, 120);
+      settings.cyclesBeforeLongBreak = clamp(Number(settings.cyclesBeforeLongBreak || 4), 2, 12);
+      settings.autoStartNext = !!settings.autoStartNext;
+      settings.countPartialFocus = settings.countPartialFocus !== false;
+
+      const ui = raw.ui && typeof raw.ui === "object" ? raw.ui : {};
+      const selectedHabitId = ui.selectedHabitId || habits[0]?.id || null;
+
+      return { habits, logs, photos, settings, ui: { selectedHabitId } };
+    }
+
+    function getLogEntry(appData, dateKey, habitId) {
+      const day = appData.logs?.[dateKey] || {};
+      const entry = day?.[habitId] || { minutes: 0, sessions: [], photoIds: [] };
+      return entry;
+    }
+
+    function setLogEntry(prevData, dateKey, habitId, entry) {
+      const logs = { ...(prevData.logs || {}) };
+      const day = { ...(logs[dateKey] || {}) };
+      day[habitId] = entry;
+      logs[dateKey] = day;
+      return { ...prevData, logs };
+    }
+
+    function addMinutesToHabit(prevData, dateKey, habitId, addMin, meta = {}) {
+      const entry = getLogEntry(prevData, dateKey, habitId);
+      const minutes = Math.max(0, Number(entry.minutes || 0) + Number(addMin || 0));
+      const session = {
+        id: uid(),
+        minutes: Math.max(0, Math.round(Number(addMin || 0))),
+        type: meta.type || "manual",
+        note: (meta.note || "").toString(),
+        createdAt: Date.now()
+      };
+      const sessions = Array.isArray(entry.sessions) ? [session, ...entry.sessions] : [session];
+      return setLogEntry(prevData, dateKey, habitId, { ...entry, minutes, sessions });
+    }
+
+    function attachPhotoToLog(prevData, photoObj) {
+      const photos = { ...(prevData.photos || {}) };
+      photos[photoObj.id] = photoObj;
+
+      const entry = getLogEntry(prevData, photoObj.dateKey, photoObj.habitId);
+      const photoIds = Array.isArray(entry.photoIds) ? [photoObj.id, ...entry.photoIds] : [photoObj.id];
+      const next = setLogEntry(prevData, photoObj.dateKey, photoObj.habitId, { ...entry, photoIds });
+
+      return { ...next, photos };
+    }
+
+    function deletePhoto(prevData, photoId) {
+      const photos = { ...(prevData.photos || {}) };
+      const p = photos[photoId];
+      if (!p) return prevData;
+      delete photos[photoId];
+
+      const entry = getLogEntry(prevData, p.dateKey, p.habitId);
+      const photoIds = (entry.photoIds || []).filter(id => id !== photoId);
+      const next = setLogEntry(prevData, p.dateKey, p.habitId, { ...entry, photoIds });
+
+      return { ...next, photos };
+    }
+
+    function isCompletedToday(entry, targetMinutes) {
+      const minutes = Number(entry?.minutes || 0);
+      return minutes >= Number(targetMinutes || 0);
+    }
+
+    function computeStreak(appData, habitId, endKey = toDateKey()) {
+      const habit = appData.habits.find(h => h.id === habitId);
+      if (!habit) return 0;
+
+      let streak = 0;
+      for (let i = 0; i < 3650; i++) {
+        const key = addDaysKey(endKey, -i);
+        const entry = getLogEntry(appData, key, habitId);
+        if (isCompletedToday(entry, habit.targetMinutes)) streak++;
+        else break;
+      }
+      return streak;
+    }
+
+    // ===========================
+    // Simple chart (canvas)
+    // ===========================
+    function ProgressChart({ dataPoints, height = 140 }) {
+      const ref = useRef(null);
+
+      useEffect(() => {
+        const canvas = ref.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        const dpr = window.devicePixelRatio || 1;
+        const width = canvas.clientWidth;
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
+        ctx.scale(dpr, dpr);
+
+        // clear
+        ctx.clearRect(0, 0, width, height);
+
+        // axes padding
+        const padX = 8;
+        const padY = 10;
+        const chartW = width - padX * 2;
+        const chartH = height - padY * 2;
+
+        const maxVal = Math.max(1, ...dataPoints.map(p => p.value));
+        const barW = chartW / dataPoints.length;
+
+        // background line
+        ctx.globalAlpha = 1;
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "#e2e8f0";
+        for (let i = 0; i <= 3; i++) {
+          const y = padY + (chartH * i) / 3;
+          ctx.beginPath();
+          ctx.moveTo(padX, y);
+          ctx.lineTo(padX + chartW, y);
+          ctx.stroke();
+        }
+
+        // bars
+        dataPoints.forEach((p, i) => {
+          const x = padX + i * barW + 1;
+          const h = (p.value / maxVal) * chartH;
+          const y = padY + (chartH - h);
+
+          // base
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = p.completed ? "#4f46e5" : "#cbd5e1";
+          ctx.fillRect(x, y, Math.max(1, barW - 2), h);
+
+          // small marker for "has photo"
+          if (p.hasPhoto) {
+            ctx.fillStyle = "#16a34a";
+            ctx.fillRect(x, padY + chartH + 2, Math.max(1, barW - 2), 4);
+          }
+        });
+      }, [dataPoints, height]);
+
+      return (
+        <div className="w-full">
+          <canvas ref={ref} className="w-full rounded-lg bg-white border border-slate-200" style={{ height }} />
+          <div className="mt-2 text-xs text-slate-500 flex gap-3 flex-wrap">
+            <span><span className="inline-block w-3 h-3 bg-indigo-600 rounded-sm align-middle mr-1"></span>Hoàn thành</span>
+            <span><span className="inline-block w-3 h-3 bg-slate-300 rounded-sm align-middle mr-1"></span>Chưa</span>
+            <span><span className="inline-block w-3 h-1 bg-green-600 rounded-sm align-middle mr-1"></span>Có ảnh</span>
+          </div>
+        </div>
+      );
+    }
+
+    // ===========================
+    // Gallery viewer (phone-like)
+    // ===========================
+    function GalleryViewer({ photos, startIndex, onClose, onDelete }) {
+      const [idx, setIdx] = useState(startIndex);
+
+      useEffect(() => {
+        const onKey = (e) => {
+          if (e.key === "Escape") onClose();
+          if (e.key === "ArrowRight") setIdx(v => Math.min(photos.length - 1, v + 1));
+          if (e.key === "ArrowLeft") setIdx(v => Math.max(0, v - 1));
+        };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+      }, [photos.length, onClose]);
+
+      const current = photos[idx];
+
+      // simple swipe
+      const touchStartX = useRef(null);
+      const onTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
+      const onTouchEnd = (e) => {
+        if (touchStartX.current == null) return;
+        const dx = e.changedTouches[0].clientX - touchStartX.current;
+        if (Math.abs(dx) > 50) {
+          if (dx < 0) setIdx(v => Math.min(photos.length - 1, v + 1));
+          else setIdx(v => Math.max(0, v - 1));
+        }
+        touchStartX.current = null;
+      };
+
+      if (!current) return null;
+
+      return (
+        <div className="fixed inset-0 z-50 bg-black/80 flex flex-col" onClick={onClose}>
+          <div className="p-3 flex items-center justify-between text-white">
+            <button className="px-3 py-2 rounded-lg hover:bg-white/10" onClick={(e)=>{e.stopPropagation(); onClose();}}>
+              ✕ Đóng
+            </button>
+            <div className="text-sm opacity-80">{idx + 1} / {photos.length}</div>
+            <button
+              className="px-3 py-2 rounded-lg hover:bg-red-500/20 text-red-200"
+              onClick={(e)=>{e.stopPropagation(); if(confirm("Xóa ảnh này?")) onDelete(current.id);}}
+            >
+              🗑 Xóa
+            </button>
+          </div>
+
+          <div className="flex-1 flex items-center justify-center px-4 pb-4" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+            <button
+              className="hidden md:block text-white/80 hover:text-white px-3 py-2"
+              onClick={(e)=>{e.stopPropagation(); setIdx(v=>Math.max(0, v-1));}}
+              disabled={idx===0}
+            >←</button>
+
+            <div className="max-w-4xl w-full" onClick={(e)=>e.stopPropagation()}>
+              <img src={current.dataUrl} alt="" className="w-full max-h-[70vh] object-contain rounded-xl shadow-2xl bg-black"/>
+              <div className="mt-3 text-white/90 text-sm flex flex-wrap gap-2 items-center justify-between">
+                <div className="opacity-80">
+                  <span className="mr-2">📅 {current.dateKey}</span>
+                  <span className="mr-2">🏷 {current.habitName}</span>
+                </div>
+                <div className="opacity-70">{current.caption || ""}</div>
+              </div>
+            </div>
+
+            <button
+              className="hidden md:block text-white/80 hover:text-white px-3 py-2"
+              onClick={(e)=>{e.stopPropagation(); setIdx(v=>Math.min(photos.length-1, v+1));}}
+              disabled={idx===photos.length-1}
+            >→</button>
+          </div>
+
+          <div className="p-3 flex justify-center gap-2 text-white/70 text-xs">
+            <span>Vuốt trái/phải hoặc dùng phím ← →</span>
+          </div>
+        </div>
+      );
+    }
+
+    // ===========================
+    // Pomodoro
+    // ===========================
+    function Pomodoro({ settings, onAddFocusMinutes }) {
+      const [mode, setMode] = useState("focus"); // focus | break | long
+      const [running, setRunning] = useState(false);
+      const [remaining, setRemaining] = useState(settings.focusMin * 60);
+      const [cycle, setCycle] = useState(0);
+      const startedAtRef = useRef(null);
+      const tickRef = useRef(null);
+
+      const modeLabel = mode === "focus" ? "Focus" : (mode === "break" ? "Break" : "Long Break");
+      const modeColor = mode === "focus" ? "bg-indigo-600" : (mode === "break" ? "bg-emerald-600" : "bg-teal-700");
+
+      useEffect(() => {
+        // dynamic title
+        document.title = running 
+          ? `(${formatSeconds(remaining)}) ${modeLabel} - HabitPomodoro` 
+          : "HabitPomodoro";
+      }, [remaining, running, modeLabel]);
+
+      useEffect(() => {
+        // update remaining when settings change (only if not running)
+        if (running) return;
+        if (mode === "focus") setRemaining(settings.focusMin * 60);
+        if (mode === "break") setRemaining(settings.breakMin * 60);
+        if (mode === "long") setRemaining(settings.longBreakMin * 60);
+      }, [settings.focusMin, settings.breakMin, settings.longBreakMin]);
+
+      const stopTick = () => {
+        if (tickRef.current) cancelAnimationFrame(tickRef.current);
+        tickRef.current = null;
+      };
+
+      const finalizeFocusIfNeeded = () => {
+        // if in focus and started, count elapsed (partial allowed)
+        if (mode !== "focus") return;
+        if (!startedAtRef.current) return;
+
+        const elapsedSec = Math.max(0, Math.round((Date.now() - startedAtRef.current) / 1000));
+        const plannedSec = settings.focusMin * 60;
+        const effectiveSec = settings.countPartialFocus ? elapsedSec : (elapsedSec >= plannedSec ? plannedSec : 0);
+        const mins = Math.floor(effectiveSec / 60);
+
+        if (mins > 0) onAddFocusMinutes(mins, { type: "pomodoro", note: "Focus session" });
+        startedAtRef.current = null;
+      };
+
+      const setModeAndReset = (nextMode) => {
+        setMode(nextMode);
+        setRunning(false);
+        startedAtRef.current = null;
+        stopTick();
+        const sec = nextMode === "focus" ? settings.focusMin * 60 : (nextMode === "break" ? settings.breakMin * 60 : settings.longBreakMin * 60);
+        setRemaining(sec);
+      };
+
+      const tick = () => {
+        tickRef.current = requestAnimationFrame(() => {
+          setRemaining(prev => {
+            if (!running) return prev;
+            const next = prev - 1;
+            return next;
+          });
+          tick();
+        });
+      };
+
+      useEffect(() => {
+        if (!running) return;
+        // Use 1s interval by rAF + time correction
+        let last = Date.now();
+        const step = () => {
+          if (!running) return;
+          const now = Date.now();
+          const diff = now - last;
+          if (diff >= 1000) {
+            const dec = Math.floor(diff / 1000);
+            last = last + dec * 1000;
+            setRemaining(r => Math.max(0, r - dec));
+          }
+          tickRef.current = requestAnimationFrame(step);
+        };
+        tickRef.current = requestAnimationFrame(step);
+        return () => stopTick();
+      }, [running]);
+
+      useEffect(() => {
+        if (!running) return;
+        if (remaining <= 0) {
+          // Play sound
+          playNotification();
+          
+          setRunning(false);
+          stopTick();
+
+          // completed a session
+          if (mode === "focus") {
+            // count full planned minutes
+            onAddFocusMinutes(settings.focusMin, { type: "pomodoro", note: "Focus completed" });
+            startedAtRef.current = null;
+
+            const nextCycle = cycle + 1;
+            setCycle(nextCycle);
+            const isLong = (nextCycle % settings.cyclesBeforeLongBreak === 0);
+            const nextMode = isLong ? "long" : "break";
+            setMode(nextMode);
+            setRemaining((isLong ? settings.longBreakMin : settings.breakMin) * 60);
+            if (settings.autoStartNext) setRunning(true);
+          } else {
+            // break finished -> back to focus
+            setMode("focus");
+            setRemaining(settings.focusMin * 60);
+            if (settings.autoStartNext) setRunning(true);
+          }
+        }
+      }, [remaining, running, mode, settings, cycle]);
+
+      const start = () => {
+        if (running) return;
+        if (mode === "focus" && !startedAtRef.current) startedAtRef.current = Date.now();
+        setRunning(true);
+      };
+
+      const pause = () => {
+        if (!running) return;
+        setRunning(false);
+        // pause retains startedAt; we’ll count partial at stop/reset manually
+      };
+
+      const reset = () => {
+        // finalize partial focus if enabled
+        if (running || startedAtRef.current) finalizeFocusIfNeeded();
+        const sec = mode === "focus" ? settings.focusMin * 60 : (mode === "break" ? settings.breakMin * 60 : settings.longBreakMin * 60);
+        setRunning(false);
+        stopTick();
+        setRemaining(sec);
+      };
+
+      const stopAndCount = () => {
+        // explicitly stop and count partial focus
+        if (running || startedAtRef.current) finalizeFocusIfNeeded();
+        setRunning(false);
+        stopTick();
+      };
+
+      const progress = useMemo(() => {
+        const total = mode === "focus" ? settings.focusMin * 60 : (mode === "break" ? settings.breakMin * 60 : settings.longBreakMin * 60);
+        return total > 0 ? 1 - (remaining / total) : 0;
+      }, [mode, remaining, settings]);
+
+      return (
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="font-bold text-slate-800">Pomodoro</div>
+            <span className={`text-xs text-white px-2 py-1 rounded-full ${modeColor}`}>{modeLabel}</span>
+          </div>
+
+          <div className="mt-4 flex items-center justify-center">
+            <div className="relative w-44 h-44">
+              <svg viewBox="0 0 120 120" className="w-full h-full">
+                <circle cx="60" cy="60" r="52" fill="none" stroke="#e2e8f0" strokeWidth="10"></circle>
+                <circle
+                  cx="60" cy="60" r="52" fill="none"
+                  stroke={mode === "focus" ? "#4f46e5" : (mode === "break" ? "#059669" : "#0f766e")}
+                  strokeWidth="10"
+                  strokeLinecap="round"
+                  strokeDasharray={2 * Math.PI * 52}
+                  strokeDashoffset={(1 - progress) * 2 * Math.PI * 52}
+                  transform="rotate(-90 60 60)"
+                ></circle>
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <div className="text-3xl font-extrabold tabular-nums">{formatSeconds(remaining)}</div>
+                <div className="text-xs text-slate-500 mt-1">Cycle: {cycle}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            {!running ? (
+              <button onClick={start} className="px-4 py-3 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700">▶ Bắt đầu</button>
+            ) : (
+              <button onClick={pause} className="px-4 py-3 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800">⏸ Tạm dừng</button>
+            )}
+            <button onClick={reset} className="px-4 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 font-semibold">↺ Reset</button>
+
+            <button onClick={() => setModeAndReset("focus")} className="px-4 py-3 rounded-xl bg-indigo-50 hover:bg-indigo-100 font-semibold">Focus</button>
+            <button onClick={() => setModeAndReset("break")} className="px-4 py-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 font-semibold">Break</button>
+
+            <button onClick={() => setModeAndReset("long")} className="px-4 py-3 rounded-xl bg-teal-50 hover:bg-teal-100 font-semibold col-span-2">Long Break</button>
+            <button onClick={stopAndCount} className="px-4 py-3 rounded-xl bg-amber-50 hover:bg-amber-100 font-semibold col-span-2">
+              ⏹ Dừng & cộng phút focus (nếu có)
+            </button>
+          </div>
+
+          <div className="mt-3 text-xs text-slate-500">
+            * Khi hết giờ, sẽ có <b>âm thanh báo</b> & app tự cộng <b>{settings.focusMin} phút</b>.
+          </div>
+        </div>
+      );
+    }
+
+    // ===========================
+    // Main App
+    // ===========================
+    function App() {
+      const STORAGE_KEY = "habit_pomo_appdata_v1";
+
+      const [tab, setTab] = useState("today"); // today | habits | progress | gallery | settings
+
+      const [appData, setAppData] = useState(() => {
+        const raw = safeJSONParse(localStorage.getItem(STORAGE_KEY), null);
+        return normalizeAppData(raw);
+      });
+
+      const todayKey = toDateKey();
+
+      // GitHub sync state
+      const [ghToken, setGhToken] = useState(() => localStorage.getItem(GH.tokenKey) || "");
+      const [ghAutosync, setGhAutosync] = useState(() => (localStorage.getItem(GH.autosyncKey) || "true") === "true");
+      const [ghIncludePhotos, setGhIncludePhotos] = useState(() => (localStorage.getItem(GH.includePhotosKey) || "true") === "true");
+      const [ghStatus, setGhStatus] = useState({ state: "idle", message: "" });
+
+      const [showConnect, setShowConnect] = useState(false);
+      const [tokenInput, setTokenInput] = useState("");
+
+      // gallery viewer
+      const [viewer, setViewer] = useState({ open: false, startIndex: 0 });
+
+      // persist local
+      useEffect(() => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+      }, [appData]);
+
+      // persist gh prefs
+      useEffect(() => {
+        if (ghToken) localStorage.setItem(GH.tokenKey, ghToken);
+        else localStorage.removeItem(GH.tokenKey);
+      }, [ghToken]);
+      useEffect(() => {
+        localStorage.setItem(GH.autosyncKey, ghAutosync ? "true" : "false");
+      }, [ghAutosync]);
+      useEffect(() => {
+        localStorage.setItem(GH.includePhotosKey, ghIncludePhotos ? "true" : "false");
+      }, [ghIncludePhotos]);
+
+      const habits = appData.habits.filter(h => h.active !== false);
+      const selectedHabitId = appData.ui.selectedHabitId || habits[0]?.id || null;
+      const selectedHabit = habits.find(h => h.id === selectedHabitId) || habits[0];
+
+      // ensure selected habit exists
+      useEffect(() => {
+        if (!selectedHabitId && habits[0]?.id) {
+          setAppData(prev => ({ ...prev, ui: { ...prev.ui, selectedHabitId: habits[0].id } }));
+        }
+      }, [habits.length]);
+
+      const todayEntry = useMemo(() => {
+        if (!selectedHabit) return { minutes: 0, sessions: [], photoIds: [] };
+        return getLogEntry(appData, todayKey, selectedHabit.id);
+      }, [appData, todayKey, selectedHabit?.id]);
+
+      const todayCompleted = useMemo(() => {
+        if (!selectedHabit) return false;
+        return isCompletedToday(todayEntry, selectedHabit.targetMinutes);
+      }, [todayEntry, selectedHabit?.targetMinutes]);
+
+      const streak = useMemo(() => selectedHabit ? computeStreak(appData, selectedHabit.id, todayKey) : 0, [appData, selectedHabit?.id, todayKey]);
+
+      const addFocusMinutes = (mins, meta) => {
+        if (!selectedHabit) return;
+        setAppData(prev => addMinutesToHabit(prev, todayKey, selectedHabit.id, mins, meta));
+      };
+
+      const addManualMinutes = () => {
+        if (!selectedHabit) return;
+        const raw = prompt("Bạn muốn cộng thêm bao nhiêu phút cho hôm nay?");
+        if (!raw) return;
+        const mins = clamp(Number(raw), 0, 1440);
+        if (!mins) return;
+        setAppData(prev => addMinutesToHabit(prev, todayKey, selectedHabit.id, mins, { type: "manual", note: "Manual add" }));
+      };
+
+      const changeSelectedHabit = (id) => {
+        setAppData(prev => ({ ...prev, ui: { ...prev.ui, selectedHabitId: id } }));
+      };
+
+      // Upload proof photo
+      const onAddPhoto = async (file) => {
+        if (!selectedHabit) return;
+        if (!file) return;
+        try {
+          setGhStatus(s => ({ ...s, state: s.state, message: "Đang nén ảnh (crop 1:1)..." }));
+          // Smart crop 1:1, 800px, quality 0.8
+          const dataUrl = await compressImageFile(file, { targetSize: 800, quality: 0.8, mime: "image/jpeg" });
+          const caption = prompt("Ghi chú cho ảnh (tùy chọn):") || "";
+          const photoObj = {
+            id: uid(),
+            dateKey: todayKey,
+            habitId: selectedHabit.id,
+            dataUrl,
+            caption,
+            createdAt: Date.now()
+          };
+          setAppData(prev => attachPhotoToLog(prev, photoObj));
+          setGhStatus({ state: "ok", message: "Đã thêm ảnh." });
+        } catch (e) {
+          console.error(e);
+          alert("Lỗi xử lý ảnh. Thử ảnh khác nhé.");
+        }
+      };
+
+      // Derived: photos list (for gallery)
+      const allPhotosList = useMemo(() => {
+        const arr = Object.values(appData.photos || {});
+        const byIdHabit = new Map(appData.habits.map(h => [h.id, h]));
+        return arr
+          .map(p => ({
+            ...p,
+            habitName: (byIdHabit.get(p.habitId)?.emoji || "✅") + " " + (byIdHabit.get(p.habitId)?.name || "Habit")
+          }))
+          .sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
+      }, [appData.photos, appData.habits]);
+
+      const openViewerAt = (index) => setViewer({ open: true, startIndex: index });
+
+      const deletePhotoById = (photoId) => {
+        setAppData(prev => deletePhoto(prev, photoId));
+      };
+
+      // Export / Import
+      const exportJSON = () => {
+        const blob = new Blob([JSON.stringify(appData, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `habit_pomo_backup_${todayKey}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      };
+
+      const importJSON = (file) => {
+        if (!file) return;
+        const r = new FileReader();
+        r.onload = () => {
+          const parsed = safeJSONParse(r.result, null);
+          if (!parsed) return alert("File JSON không hợp lệ.");
+          if (!confirm("Nhập file sẽ GHI ĐÈ dữ liệu hiện tại. Tiếp tục?")) return;
+          setAppData(normalizeAppData(parsed));
+          alert("Nhập thành công!");
+        };
+        r.readAsText(file);
+      };
+
+      // ===========================
+      // GitHub connect/pull/push + autosync
+      // ===========================
+      const buildSyncPayload = (includePhotos) => {
+        if (includePhotos) return appData;
+        // remove photos to reduce size
+        const stripped = { ...appData, photos: {} };
+        // also strip photoIds in logs
+        const logs = {};
+        for (const [dk, day] of Object.entries(appData.logs || {})) {
+          logs[dk] = {};
+          for (const [hid, entry] of Object.entries(day || {})) {
+            logs[dk][hid] = { ...entry, photoIds: [] };
+          }
+        }
+        stripped.logs = logs;
+        return stripped;
+      };
+
+      const estimateSizeKB = (obj) => {
+        try {
+          const s = JSON.stringify(obj);
+          return Math.round((s.length / 1024) * 10) / 10;
+        } catch {
+          return 0;
+        }
+      };
+
+      const connectGitHub = async () => {
+        const token = tokenInput.trim();
+        if (!token) return alert("Bạn chưa dán token.");
+        setGhStatus({ state: "loading", message: "Đang kết nối GitHub..." });
+
+        try {
+          const remote = await ghLoadData(token);
+          setGhToken(token);
+          setShowConnect(false);
+
+          if (remote && typeof remote === "object") {
+            const normalized = normalizeAppData(remote);
+            if (confirm("Đã tìm thấy dữ liệu trên GitHub. Tải về và GHI ĐÈ dữ liệu hiện tại?")) {
+              setAppData(normalized);
+              setGhStatus({ state: "ok", message: "Đã tải dữ liệu từ GitHub." });
+            } else {
+              // push local as chosen
+              const payload = buildSyncPayload(ghIncludePhotos);
+              await ghSaveData(token, payload);
+              setGhStatus({ state: "ok", message: "Đã lưu dữ liệu local lên GitHub." });
+            }
+          } else {
+            // init remote with local
+            const payload = buildSyncPayload(ghIncludePhotos);
+            await ghSaveData(token, payload);
+            setGhStatus({ state: "ok", message: "GitHub trống → đã khởi tạo dữ liệu." });
+          }
+        } catch (e) {
+          console.error(e);
+          setGhStatus({ state: "error", message: "Kết nối thất bại: " + (e?.message || "unknown") });
+          alert("Token không dùng được hoặc thiếu quyền.\nGợi ý: Token (classic) tick 'gist' hoặc Fine-grained có 'Gists: Read/Write'.");
+        }
+      };
+
+      const disconnectGitHub = () => {
+        if (!confirm("Ngắt GitHub trên thiết bị này? (Dữ liệu trên GitHub không bị xóa)")) return;
+        setGhToken("");
+        localStorage.removeItem(GH.gistIdKey);
+        setGhStatus({ state: "idle", message: "" });
+      };
+
+      const pullFromGitHub = async () => {
+        if (!ghToken) return alert("Bạn chưa kết nối GitHub.");
+        try {
+          setGhStatus({ state: "loading", message: "Đang tải từ GitHub..." });
+          const remote = await ghLoadData(ghToken);
+          if (!remote) {
+            setGhStatus({ state: "ok", message: "GitHub đang trống." });
+            return;
+          }
+          if (!confirm("Tải từ GitHub sẽ GHI ĐÈ dữ liệu hiện tại. Tiếp tục?")) {
+            setGhStatus({ state: "idle", message: "" });
+            return;
+          }
+          setAppData(normalizeAppData(remote));
+          setGhStatus({ state: "ok", message: "Đã tải từ GitHub." });
+        } catch (e) {
+          console.error(e);
+          setGhStatus({ state: "error", message: "Tải thất bại: " + (e?.message || "unknown") });
+        }
+      };
+
+      const pushToGitHub = async () => {
+        if (!ghToken) return alert("Bạn chưa kết nối GitHub.");
+        try {
+          setGhStatus({ state: "saving", message: "Đang lưu lên GitHub..." });
+          const payload = buildSyncPayload(ghIncludePhotos);
+
+          const sizeKB = estimateSizeKB(payload);
+          if (sizeKB > 900) {
+            const ok = confirm(`Dữ liệu đang ~${sizeKB}KB. Gist có thể lỗi nếu quá lớn.\nBạn muốn tiếp tục thử lưu không?`);
+            if (!ok) {
+              setGhStatus({ state: "idle", message: "Đã hủy lưu." });
+              return;
+            }
+          }
+
+          await ghSaveData(ghToken, payload);
+          setGhStatus({ state: "ok", message: "Đã lưu lên GitHub." });
+        } catch (e) {
+          console.error(e);
+          setGhStatus({ state: "error", message: "Lưu thất bại: " + (e?.message || "unknown") });
+        }
+      };
+
+      // autosync (debounced)
+      useEffect(() => {
+        if (!ghToken || !ghAutosync) return;
+        const t = setTimeout(async () => {
+          try {
+            setGhStatus({ state: "saving", message: "Autosync: đang lưu..." });
+            const payload = buildSyncPayload(ghIncludePhotos);
+            const sizeKB = estimateSizeKB(payload);
+
+            // if too big, auto prevent if includePhotos is on
+            if (sizeKB > 950 && ghIncludePhotos) {
+              setGhStatus({ state: "error", message: `Autosync dừng: dữ liệu ~${sizeKB}KB (quá lớn do ảnh). Tắt 'Sync kèm ảnh' hoặc xóa bớt ảnh.` });
+              return;
+            }
+
+            await ghSaveData(ghToken, payload);
+            setGhStatus({ state: "ok", message: "Autosync: đã lưu." });
+          } catch (e) {
+            setGhStatus({ state: "error", message: "Autosync lỗi: " + (e?.message || "unknown") });
+          }
+        }, 1200);
+        return () => clearTimeout(t);
+      }, [appData, ghToken, ghAutosync, ghIncludePhotos]);
+
+      // initial load from github once if token exists
+      useEffect(() => {
+        let cancelled = false;
+        (async () => {
+          if (!ghToken) return;
+          setGhStatus({ state: "loading", message: "Đang tải từ GitHub..." });
+          try {
+            const remote = await ghLoadData(ghToken);
+            if (cancelled) return;
+            if (remote) {
+              setAppData(normalizeAppData(remote));
+              setGhStatus({ state: "ok", message: "Đã tải dữ liệu GitHub." });
+            } else {
+              setGhStatus({ state: "ok", message: "GitHub trống (chưa có dữ liệu)." });
+            }
+          } catch (e) {
+            if (!cancelled) setGhStatus({ state: "error", message: "Lỗi GitHub: " + (e?.message || "unknown") });
+          }
+        })();
+        return () => { cancelled = true; };
+      }, []); // run once
+
+      // ===========================
+      // Tabs UI
+      // ===========================
+      const TopNav = () => (
+        <header className="sticky top-0 z-40 bg-indigo-600 text-white shadow-md">
+          <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2 font-extrabold">
+              <span className="text-lg">⏱️ HabitPomodoro</span>
+              <span className="text-xs opacity-80 font-semibold bg-white/15 px-2 py-1 rounded-full">miniapp</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              {!ghToken ? (
+                <span className="bg-white/15 px-2 py-1 rounded-full">Chưa sync</span>
+              ) : (
+                <span className={`px-2 py-1 rounded-full ${ghStatus.state==="error" ? "bg-red-500/40" : ghStatus.state==="saving"||ghStatus.state==="loading" ? "bg-amber-500/40" : "bg-emerald-500/35"}`}>
+                  GitHub: {ghStatus.state==="error" ? "Lỗi" : ghStatus.state==="saving" ? "Đang lưu" : ghStatus.state==="loading" ? "Đang tải" : "OK"}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="max-w-5xl mx-auto px-2 pb-2">
+            <div className="grid grid-cols-5 gap-1 text-xs">
+              {[
+                ["today","Hôm nay","✅"],
+                ["habits","Habits","📌"],
+                ["progress","Tiến trình","📈"],
+                ["gallery","Gallery","🖼️"],
+                ["settings","Cài đặt","⚙️"],
+              ].map(([k,label,ic]) => (
+                <button
+                  key={k}
+                  onClick={() => setTab(k)}
+                  className={`px-2 py-2 rounded-xl font-semibold transition ${tab===k ? "bg-white text-indigo-700" : "bg-white/15 hover:bg-white/20"}`}
+                >
+                  <div className="leading-tight">{ic}</div>
+                  <div className="opacity-90">{label}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </header>
+      );
+
+      // ===========================
+      // Today Tab
+      // ===========================
+      const TodayTab = () => {
+        if (!selectedHabit) return (
+          <div className="p-4 bg-white rounded-2xl border border-slate-200">
+            Chưa có habit nào. Vào tab Habits để tạo.
+          </div>
+        );
+
+        const progressRatio = selectedHabit.targetMinutes > 0 ? clamp((todayEntry.minutes || 0) / selectedHabit.targetMinutes, 0, 2) : 0;
+        const progressPct = Math.round(Math.min(1, progressRatio) * 100);
+
+        const photosForToday = (todayEntry.photoIds || [])
+          .map(id => appData.photos[id])
+          .filter(Boolean)
+          .sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+
+        return (
+          <div className="space-y-4">
+            <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-xs text-slate-500 font-semibold">Hôm nay</div>
+                  <div className="text-xl font-extrabold">{todayKey}</div>
+                  <div className="mt-1 text-sm text-slate-600">
+                    Streak: <b className="text-indigo-700">{streak} ngày</b>
+                  </div>
+                </div>
+                <span className={`px-3 py-1 rounded-full text-sm font-bold ${todayCompleted ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
+                  {todayCompleted ? "✅ Hoàn thành" : "⏳ Chưa"}
+                </span>
+              </div>
+
+              <div className="mt-4 grid md:grid-cols-2 gap-3">
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="font-bold text-slate-800">Habit đang làm</div>
+                    <select
+                      value={selectedHabit.id}
+                      onChange={(e)=>changeSelectedHabit(e.target.value)}
+                      className="text-sm border border-slate-300 rounded-lg px-2 py-1 bg-white"
+                    >
+                      {habits.map(h => (
+                        <option key={h.id} value={h.id}>{h.emoji} {h.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="mt-3">
+                    <div className="text-sm text-slate-600">
+                      Mục tiêu: <b>{selectedHabit.targetMinutes} phút/ngày</b>
+                    </div>
+                    <div className="text-sm text-slate-600">
+                      Đã làm: <b>{Math.round(todayEntry.minutes || 0)} phút</b>
+                    </div>
+
+                    <div className="mt-3">
+                      <div className="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
+                        <div className={`h-full ${todayCompleted ? "bg-emerald-600" : "bg-indigo-600"}`} style={{ width: `${Math.min(100, progressPct)}%` }}></div>
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500 flex justify-between">
+                        <span>{progressPct}%</span>
+                        <span>{todayCompleted ? "Đủ điều kiện hoàn thành" : "Cần thêm phút"}</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <button onClick={addManualMinutes} className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 font-semibold">
+                        ➕ Cộng phút thủ công
+                      </button>
+
+                      <label className="px-3 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 font-semibold cursor-pointer text-center">
+                        📸 Thêm ảnh proof
+                        <input type="file" accept="image/*" className="hidden" onChange={(e)=>onAddPhoto(e.target.files[0])} />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <Pomodoro
+                  settings={appData.settings}
+                  onAddFocusMinutes={(mins, meta) => addFocusMinutes(mins, meta)}
+                />
+              </div>
+
+              <div className="mt-4">
+                <div className="flex items-center justify-between">
+                  <div className="font-bold text-slate-800">Hôm nay bạn đã làm gì?</div>
+                  <div className="text-xs text-slate-500">{(todayEntry.sessions || []).length} lượt ghi nhận</div>
+                </div>
+
+                <div className="mt-2 space-y-2 max-h-56 overflow-auto no-scrollbar">
+                  {(todayEntry.sessions || []).slice(0, 12).map(s => (
+                    <div key={s.id} className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between">
+                      <div>
+                        <div className="text-sm font-semibold">
+                          {s.type === "pomodoro" ? "⏱️ Pomodoro" : "✍️ Manual"} • <span className="text-indigo-700">{s.minutes} phút</span>
+                        </div>
+                        <div className="text-xs text-slate-500">{new Date(s.createdAt).toLocaleString()}</div>
+                      </div>
+                      <div className="text-xs text-slate-600 max-w-[55%] truncate">{s.note || ""}</div>
+                    </div>
+                  ))}
+                  {(todayEntry.sessions || []).length === 0 && (
+                    <div className="text-sm text-slate-500 bg-slate-50 border border-dashed border-slate-300 rounded-xl p-4 text-center">
+                      Chưa có lượt nào. Bấm Pomodoro hoặc cộng phút thủ công.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <div className="font-bold text-slate-800">Ảnh proof hôm nay</div>
+                {photosForToday.length === 0 ? (
+                  <div className="mt-2 text-sm text-slate-500 bg-slate-50 border border-dashed border-slate-300 rounded-xl p-4 text-center">
+                    Chưa có ảnh nào.
+                  </div>
+                ) : (
+                  <div className="mt-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                    {photosForToday.map((p, i) => {
+                      const indexInAll = allPhotosList.findIndex(x => x.id === p.id);
+                      return (
+                        <button key={p.id} onClick={()=>openViewerAt(Math.max(0,indexInAll))} className="aspect-square rounded-xl overflow-hidden border border-slate-200 bg-white">
+                          <img src={p.dataUrl} alt="" className="w-full h-full object-cover"/>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      // ===========================
+      // Habits Tab
+      // ===========================
+      const HabitsTab = () => {
+        const [editingId, setEditingId] = useState(null);
+        const [draft, setDraft] = useState({ name: "", targetMinutes: 30, emoji: "✅" });
+
+        const startAdd = () => {
+          setEditingId("new");
+          setDraft({ name: "", targetMinutes: 30, emoji: "✅" });
+        };
+
+        const startEdit = (h) => {
+          setEditingId(h.id);
+          setDraft({ name: h.name, targetMinutes: h.targetMinutes, emoji: h.emoji || "✅" });
+        };
+
+        const save = () => {
+          const name = draft.name.trim();
+          const target = clamp(Number(draft.targetMinutes), 1, 1440);
+          const emoji = (draft.emoji || "✅").toString().slice(0,3);
+
+          if (!name) return alert("Tên habit không được trống.");
+
+          if (editingId === "new") {
+            const newHabit = { id: uid(), name, targetMinutes: target, emoji, active: true };
+            setAppData(prev => {
+              const habits = [newHabit, ...prev.habits];
+              const ui = { ...prev.ui, selectedHabitId: prev.ui.selectedHabitId || newHabit.id };
+              return { ...prev, habits, ui };
+            });
+          } else {
+            setAppData(prev => ({
+              ...prev,
+              habits: prev.habits.map(h => h.id === editingId ? { ...h, name, targetMinutes: target, emoji } : h)
+            }));
+          }
+          setEditingId(null);
+        };
+
+        const remove = (h) => {
+          if (!confirm(`Xóa habit "${h.name}"? (dữ liệu logs/ảnh vẫn còn trong file, nhưng không hiện)`)) return;
+          setAppData(prev => {
+            const habits = prev.habits.map(x => x.id === h.id ? { ...x, active: false } : x);
+            const ui = { ...prev.ui };
+            if (ui.selectedHabitId === h.id) ui.selectedHabitId = habits.find(x=>x.active!==false)?.id || null;
+            return { ...prev, habits, ui };
+          });
+        };
+
+        return (
+          <div className="space-y-4">
+            <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xl font-extrabold">Habits</div>
+                  <div className="text-sm text-slate-500">Mỗi habit: đủ <b>X phút/ngày</b> mới tính hoàn thành.</div>
+                </div>
+                <button onClick={startAdd} className="px-4 py-2 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700">➕ Thêm</button>
+              </div>
+
+              <div className="mt-4 space-y-2">
+                {habits.map(h => (
+                  <div key={h.id} className="p-3 rounded-2xl border border-slate-200 bg-slate-50 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="font-bold truncate">{h.emoji} {h.name}</div>
+                      <div className="text-xs text-slate-500">Mục tiêu: {h.targetMinutes} phút/ngày</div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => { changeSelectedHabit(h.id); setTab("today"); }}
+                        className="px-3 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 font-semibold">
+                        Làm hôm nay
+                      </button>
+                      <button onClick={()=>startEdit(h)} className="px-3 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 font-semibold">
+                        Sửa
+                      </button>
+                      <button onClick={()=>remove(h)} className="px-3 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 font-semibold">
+                        Xóa
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {habits.length === 0 && (
+                  <div className="text-sm text-slate-500 bg-slate-50 border border-dashed border-slate-300 rounded-xl p-6 text-center">
+                    Chưa có habit nào. Bấm “Thêm”.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {editingId && (
+              <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+                <div className="font-extrabold text-lg">{editingId==="new" ? "Thêm habit" : "Sửa habit"}</div>
+                <div className="mt-3 grid md:grid-cols-3 gap-3">
+                  <div className="md:col-span-2">
+                    <div className="text-sm font-semibold text-slate-700">Tên</div>
+                    <input value={draft.name} onChange={(e)=>setDraft(d=>({...d, name:e.target.value}))}
+                      className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none bg-white"
+                      placeholder="Ví dụ: Tập thể dục"
+                    />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-slate-700">Emoji</div>
+                    <input value={draft.emoji} onChange={(e)=>setDraft(d=>({...d, emoji:e.target.value}))}
+                      className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none bg-white"
+                      placeholder="✅"
+                    />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-slate-700">Mục tiêu phút/ngày</div>
+                    <input type="number" min="1" max="1440" value={draft.targetMinutes}
+                      onChange={(e)=>setDraft(d=>({...d, targetMinutes:e.target.value}))}
+                      className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4 flex gap-2 justify-end">
+                  <button onClick={()=>setEditingId(null)} className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 font-semibold">Hủy</button>
+                  <button onClick={save} className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold">Lưu</button>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      };
+
+      // ===========================
+      // Progress Tab
+      // ===========================
+      const ProgressTab = () => {
+        if (!selectedHabit) return null;
+
+        const keys = lastNDaysKeys(30, todayKey);
+
+        const points = keys.map(k => {
+          const entry = getLogEntry(appData, k, selectedHabit.id);
+          const dayHasPhoto = (entry.photoIds || []).length > 0;
+          return {
+            key: k,
+            value: Number(entry.minutes || 0),
+            completed: isCompletedToday(entry, selectedHabit.targetMinutes),
+            hasPhoto: dayHasPhoto
+          };
+        });
+
+        const completedCount = points.filter(p=>p.completed).length;
+        const completionRate = Math.round((completedCount / points.length) * 100);
+
+        const totalMinutes = points.reduce((a,p)=>a + (p.value||0), 0);
+        const avgMinutes = Math.round(totalMinutes / points.length);
+
+        return (
+          <div className="space-y-4">
+            <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-xl font-extrabold">Tiến trình</div>
+                  <div className="text-sm text-slate-500">30 ngày gần nhất • {selectedHabit.emoji} {selectedHabit.name}</div>
+                </div>
+                <select
+                  value={selectedHabit.id}
+                  onChange={(e)=>changeSelectedHabit(e.target.value)}
+                  className="text-sm border border-slate-300 rounded-lg px-2 py-1 bg-white"
+                >
+                  {habits.map(h => <option key={h.id} value={h.id}>{h.emoji} {h.name}</option>)}
+                </select>
+              </div>
+
+              <div className="mt-4">
+                <ProgressChart dataPoints={points} />
+              </div>
+
+              <div className="mt-4 grid sm:grid-cols-3 gap-3">
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                  <div className="text-xs text-slate-500 font-semibold">Tỉ lệ hoàn thành</div>
+                  <div className="text-2xl font-extrabold text-indigo-700">{completionRate}%</div>
+                  <div className="text-xs text-slate-500">{completedCount}/{points.length} ngày đủ {selectedHabit.targetMinutes} phút</div>
+                </div>
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                  <div className="text-xs text-slate-500 font-semibold">Streak hiện tại</div>
+                  <div className="text-2xl font-extrabold text-emerald-700">{streak} ngày</div>
+                  <div className="text-xs text-slate-500">Tính đến hôm nay</div>
+                </div>
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                  <div className="text-xs text-slate-500 font-semibold">Trung bình phút/ngày</div>
+                  <div className="text-2xl font-extrabold text-slate-800">{avgMinutes}</div>
+                  <div className="text-xs text-slate-500">Tổng: {Math.round(totalMinutes)} phút</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      // ===========================
+      // Gallery Tab
+      // ===========================
+      const GalleryTab = () => {
+        const [filterHabitId, setFilterHabitId] = useState("all");
+        const [filterKey, setFilterKey] = useState("");
+
+        const filtered = allPhotosList.filter(p => {
+          if (filterHabitId !== "all" && p.habitId !== filterHabitId) return false;
+          if (filterKey && p.dateKey !== filterKey) return false;
+          return true;
+        });
+
+        return (
+          <div className="space-y-4">
+            <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <div className="text-xl font-extrabold">Gallery</div>
+                  <div className="text-sm text-slate-500">Tổng hợp ảnh proof (bấm để xem full).</div>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  <select
+                    value={filterHabitId}
+                    onChange={(e)=>setFilterHabitId(e.target.value)}
+                    className="text-sm border border-slate-300 rounded-lg px-2 py-1 bg-white"
+                  >
+                    <option value="all">Tất cả habits</option>
+                    {habits.map(h => <option key={h.id} value={h.id}>{h.emoji} {h.name}</option>)}
+                  </select>
+                  <input
+                    type="date"
+                    value={filterKey}
+                    onChange={(e)=>setFilterKey(e.target.value)}
+                    className="text-sm border border-slate-300 rounded-lg px-2 py-1 bg-white"
+                  />
+                  <button onClick={()=>setFilterKey("")} className="text-sm px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 font-semibold">
+                    Clear date
+                  </button>
+                </div>
+              </div>
+
+              {filtered.length === 0 ? (
+                <div className="mt-4 text-sm text-slate-500 bg-slate-50 border border-dashed border-slate-300 rounded-xl p-6 text-center">
+                  Chưa có ảnh nào (hoặc filter đang lọc hết).
+                </div>
+              ) : (
+                <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                  {filtered.map((p, i) => (
+                    <button key={p.id} onClick={()=>openViewerAt(allPhotosList.findIndex(x=>x.id===p.id))}
+                      className="aspect-square rounded-xl overflow-hidden border border-slate-200 bg-white">
+                      <img src={p.dataUrl} alt="" className="w-full h-full object-cover"/>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-4 text-xs text-slate-500">
+                Tip: ảnh được <b>tự nén</b> để đỡ nặng. Nếu bạn bật sync ảnh lên GitHub mà thấy lỗi, vào Cài đặt → tắt “Sync kèm ảnh”.
+              </div>
+            </div>
+
+            {viewer.open && (
+              <GalleryViewer
+                photos={allPhotosList}
+                startIndex={viewer.startIndex}
+                onClose={() => setViewer({ open:false, startIndex:0 })}
+                onDelete={(photoId)=>{ deletePhotoById(photoId); setViewer(v=>({ ...v, open:false })); }}
+              />
+            )}
+          </div>
+        );
+      };
+
+      // ===========================
+      // Settings Tab
+      // ===========================
+      const SettingsTab = () => {
+        const sizeWithPhotosKB = estimateSizeKB(buildSyncPayload(true));
+        const sizeNoPhotosKB = estimateSizeKB(buildSyncPayload(false));
+
+        return (
+          <div className="space-y-4">
+            <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+              <div className="text-xl font-extrabold">Cài đặt Pomodoro</div>
+
+              <div className="mt-3 grid md:grid-cols-2 gap-3">
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                  <div className="text-sm font-bold">Thời lượng</div>
+                  <div className="mt-2 grid grid-cols-3 gap-2 text-sm">
+                    <label className="flex flex-col gap-1">
+                      Focus (phút)
+                      <input type="number" min="1" max="180"
+                        value={appData.settings.focusMin}
+                        onChange={(e)=>setAppData(prev=>({ ...prev, settings:{ ...prev.settings, focusMin: Number(e.target.value) }}))}
+                        className="px-3 py-2 rounded-xl border border-slate-300 bg-white"
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      Break (phút)
+                      <input type="number" min="1" max="60"
+                        value={appData.settings.breakMin}
+                        onChange={(e)=>setAppData(prev=>({ ...prev, settings:{ ...prev.settings, breakMin: Number(e.target.value) }}))}
+                        className="px-3 py-2 rounded-xl border border-slate-300 bg-white"
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      Long (phút)
+                      <input type="number" min="1" max="120"
+                        value={appData.settings.longBreakMin}
+                        onChange={(e)=>setAppData(prev=>({ ...prev, settings:{ ...prev.settings, longBreakMin: Number(e.target.value) }}))}
+                        className="px-3 py-2 rounded-xl border border-slate-300 bg-white"
+                      />
+                    </label>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                    <label className="flex flex-col gap-1">
+                      Long break mỗi
+                      <input type="number" min="2" max="12"
+                        value={appData.settings.cyclesBeforeLongBreak}
+                        onChange={(e)=>setAppData(prev=>({ ...prev, settings:{ ...prev.settings, cyclesBeforeLongBreak: Number(e.target.value) }}))}
+                        className="px-3 py-2 rounded-xl border border-slate-300 bg-white"
+                      />
+                      <span className="text-xs text-slate-500">cycles focus</span>
+                    </label>
+
+                    <div className="flex flex-col gap-2 justify-end">
+                      <label className="flex items-center gap-2 text-sm">
+                        <input type="checkbox" className="accent-indigo-600"
+                          checked={appData.settings.autoStartNext}
+                          onChange={(e)=>setAppData(prev=>({ ...prev, settings:{ ...prev.settings, autoStartNext: e.target.checked }}))}
+                        />
+                        Auto start phiên tiếp
+                      </label>
+                      <label className="flex items-center gap-2 text-sm">
+                        <input type="checkbox" className="accent-indigo-600"
+                          checked={appData.settings.countPartialFocus}
+                          onChange={(e)=>setAppData(prev=>({ ...prev, settings:{ ...prev.settings, countPartialFocus: e.target.checked }}))}
+                        />
+                        Cho cộng focus dừng sớm
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                  <div className="text-sm font-bold">Dữ liệu</div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button onClick={exportJSON} className="px-4 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 font-semibold">
+                      ⬇ Export JSON
+                    </button>
+                    <label className="px-4 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 font-semibold cursor-pointer">
+                      ⬆ Import JSON
+                      <input type="file" accept="application/json" className="hidden" onChange={(e)=>importJSON(e.target.files[0])}/>
+                    </label>
+                    <button
+                      onClick={() => {
+                        if (!confirm("XÓA sạch dữ liệu local? (không đụng GitHub)")) return;
+                        localStorage.removeItem(STORAGE_KEY);
+                        setAppData(normalizeAppData(null));
+                      }}
+                      className="px-4 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 font-semibold"
+                    >
+                      🧨 Reset local
+                    </button>
+                  </div>
+
+                  <div className="mt-3 text-xs text-slate-500">
+                    Dung lượng ước tính sync:
+                    <div className="mt-1">
+                      <b>Kèm ảnh:</b> ~{sizeWithPhotosKB}KB • <b>Không ảnh:</b> ~{sizeNoPhotosKB}KB
+                    </div>
+                    <div className="mt-1">
+                      Nếu “kèm ảnh” quá lớn, GitHub API có thể báo lỗi.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <div className="text-xl font-extrabold">GitHub Sync (Gist)</div>
+                  <div className="text-sm text-slate-500">Để “vô là có” đa thiết bị (không server).</div>
+                </div>
+
+                {!ghToken ? (
+                  <button onClick={()=>{ setTokenInput(""); setShowConnect(true); }} className="px-4 py-2 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700">
+                    🔗 Kết nối
+                  </button>
+                ) : (
+                  <button onClick={disconnectGitHub} className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 font-semibold">
+                    ✂ Ngắt
+                  </button>
+                )}
+              </div>
+
+              <div className="mt-3 grid md:grid-cols-2 gap-3">
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                  <div className="text-sm font-bold">Tùy chọn sync</div>
+                  <div className="mt-2 space-y-2 text-sm">
+                    <label className={`flex items-center gap-2 ${!ghToken ? "opacity-50" : ""}`}>
+                      <input type="checkbox" className="accent-indigo-600" disabled={!ghToken} checked={ghAutosync}
+                        onChange={(e)=>setGhAutosync(e.target.checked)}
+                      />
+                      Autosync (khuyên bật)
+                    </label>
+
+                    <label className={`flex items-center gap-2 ${!ghToken ? "opacity-50" : ""}`}>
+                      <input type="checkbox" className="accent-indigo-600" disabled={!ghToken} checked={ghIncludePhotos}
+                        onChange={(e)=>setGhIncludePhotos(e.target.checked)}
+                      />
+                      Sync kèm ảnh proof (có thể nặng)
+                    </label>
+
+                    <div className="text-xs text-slate-500">
+                      Trạng thái: <b>{ghStatus.state}</b> • {ghStatus.message}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                  <div className="text-sm font-bold">Thao tác</div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button disabled={!ghToken} onClick={pullFromGitHub}
+                      className={`px-4 py-2 rounded-xl font-semibold border ${ghToken ? "bg-white hover:bg-slate-100 border-slate-200" : "bg-slate-100 border-slate-200 opacity-50"}`}>
+                      ⬇ Tải (Pull)
+                    </button>
+                    <button disabled={!ghToken} onClick={pushToGitHub}
+                      className={`px-4 py-2 rounded-xl font-semibold border ${ghToken ? "bg-white hover:bg-slate-100 border-slate-200" : "bg-slate-100 border-slate-200 opacity-50"}`}>
+                      ⬆ Lưu (Push)
+                    </button>
+                  </div>
+
+                  <div className="mt-3 text-xs text-slate-500">
+                    Token: lưu trong trình duyệt thiết bị này (LocalStorage). Thiết bị khác phải dán 1 lần.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {showConnect && (
+              <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+                <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl p-6 space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div className="text-xl font-extrabold">Kết nối GitHub Gist</div>
+                    <button onClick={()=>setShowConnect(false)} className="px-3 py-2 rounded-lg hover:bg-slate-100">✕</button>
+                  </div>
+                  <div className="text-sm text-slate-600 space-y-2">
+                    <div><b>Token (classic):</b> Settings → Developer settings → Personal access tokens → Tokens (classic) → tick <b>gist</b></div>
+                    <div><b>Fine-grained:</b> cần quyền <b>Gists: Read/Write</b> (nếu tài khoản bạn có hiển thị).</div>
+                  </div>
+
+                  <input value={tokenInput} onChange={(e)=>setTokenInput(e.target.value)}
+                    placeholder="Dán token vào đây..."
+                    className="w-full px-3 py-3 rounded-xl border border-slate-300 bg-slate-50 font-mono text-sm outline-none focus:border-indigo-500"
+                  />
+
+                  <div className="flex justify-end gap-2">
+                    <button onClick={()=>setShowConnect(false)} className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 font-semibold">Hủy</button>
+                    <button onClick={connectGitHub} className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold">
+                      Kết nối
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      };
+
+      // ===========================
+      // Render
+      // ===========================
+      return (
+        <div className="min-h-screen">
+          <TopNav />
+          <main className="max-w-5xl mx-auto px-4 py-4">
+            {tab === "today" && <TodayTab />}
+            {tab === "habits" && <HabitsTab />}
+            {tab === "progress" && <ProgressTab />}
+            {tab === "gallery" && <GalleryTab />}
+            {tab === "settings" && <SettingsTab />}
+          </main>
+          <footer className="max-w-5xl mx-auto px-4 pb-8 text-xs text-slate-500">
+            <div className="mt-4 bg-white border border-slate-200 rounded-2xl p-3">
+              Quy tắc hoàn thành: <b>đủ “mục tiêu phút/ngày”</b> ⇒ ✅ hoàn thành.
+              <span className="ml-2">Ảnh proof giúp bạn “chứng minh hoạt động”.</span>
+            </div>
+          </footer>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
+  </script>
+</body>
+</html>
