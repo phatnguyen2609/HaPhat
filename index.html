@@ -206,7 +206,7 @@
       }
 
       if (file.raw_url) {
-        const rawRes = await fetch(file.raw_url, { headers: { "Authorization": `Bearer ${token}` } });
+        const rawRes = await fetch(file.raw_url, { cache: "no-store" });
         const text = await rawRes.text();
         return safeJSONParse(text, null);
       }
@@ -516,7 +516,8 @@
       const startedAtRef = useRef(null);
       const tickRef = useRef(null);
 
-      const modeLabel = mode === "focus" ? "Focus" : (mode === "break" ? "Break" : "Long Break");
+            const focusAccumSecRef = useRef(0);
+const modeLabel = mode === "focus" ? "Focus" : (mode === "break" ? "Break" : "Long Break");
       const modeColor = mode === "focus" ? "bg-indigo-600" : (mode === "break" ? "bg-emerald-600" : "bg-teal-700");
 
       useEffect(() => {
@@ -532,7 +533,7 @@
         if (mode === "focus") setRemaining(settings.focusMin * 60);
         if (mode === "break") setRemaining(settings.breakMin * 60);
         if (mode === "long") setRemaining(settings.longBreakMin * 60);
-      }, [settings.focusMin, settings.breakMin, settings.longBreakMin]);
+      }, [settings.focusMin, settings.breakMin, settings.longBreakMin, mode, running]);
 
       const stopTick = () => {
         if (tickRef.current) cancelAnimationFrame(tickRef.current);
@@ -540,24 +541,41 @@
       };
 
       const finalizeFocusIfNeeded = () => {
-        // if in focus and started, count elapsed (partial allowed)
-        if (mode !== "focus") return;
-        if (!startedAtRef.current) return;
+        // Only count time spent in focus mode.
+        if (mode !== "focus") {
+          startedAtRef.current = null;
+          focusAccumSecRef.current = 0;
+          return;
+        }
 
-        const elapsedSec = Math.max(0, Math.round((Date.now() - startedAtRef.current) / 1000));
+        // total elapsed = accumulated (from pauses) + current running span (if any)
+        let elapsedSec = focusAccumSecRef.current || 0;
+        if (startedAtRef.current) {
+          elapsedSec += Math.max(0, Math.round((Date.now() - startedAtRef.current) / 1000));
+        }
+
+        if (elapsedSec <= 0) {
+          startedAtRef.current = null;
+          focusAccumSecRef.current = 0;
+          return;
+        }
+
         const plannedSec = settings.focusMin * 60;
         const effectiveSec = settings.countPartialFocus ? elapsedSec : (elapsedSec >= plannedSec ? plannedSec : 0);
         const mins = Math.floor(effectiveSec / 60);
 
         if (mins > 0) onAddFocusMinutes(mins, { type: "pomodoro", note: "Focus session" });
+
         startedAtRef.current = null;
+        focusAccumSecRef.current = 0;
       };
 
       const setModeAndReset = (nextMode) => {
         setMode(nextMode);
         setRunning(false);
         startedAtRef.current = null;
-        stopTick();
+        
+        focusAccumSecRef.current = 0;stopTick();
         const sec = nextMode === "focus" ? settings.focusMin * 60 : (nextMode === "break" ? settings.breakMin * 60 : settings.longBreakMin * 60);
         setRemaining(sec);
       };
@@ -606,6 +624,7 @@
             // count full planned minutes
             onAddFocusMinutes(settings.focusMin, { type: "pomodoro", note: "Focus completed" });
             startedAtRef.current = null;
+            focusAccumSecRef.current = 0;
 
             const nextCycle = cycle + 1;
             setCycle(nextCycle);
@@ -618,8 +637,13 @@
             // break finished -> back to focus
             setMode("focus");
             setRemaining(settings.focusMin * 60);
-            if (settings.autoStartNext) setRunning(true);
-          }
+            startedAtRef.current = null;
+            focusAccumSecRef.current = 0;
+            if (settings.autoStartNext) {
+              startedAtRef.current = Date.now();
+              setRunning(true);
+            }
+            }
         }
       }, [remaining, running, mode, settings, cycle]);
 
@@ -631,8 +655,15 @@
 
       const pause = () => {
         if (!running) return;
+
+        // Freeze the current focus span so pausing doesn't get counted as focus time.
+        if (mode === "focus" && startedAtRef.current) {
+          focusAccumSecRef.current += Math.max(0, Math.round((Date.now() - startedAtRef.current) / 1000));
+          startedAtRef.current = null;
+        }
+
         setRunning(false);
-        // pause retains startedAt; we’ll count partial at stop/reset manually
+        stopTick();
       };
 
       const reset = () => {
