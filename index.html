@@ -632,7 +632,7 @@ const modeLabel = mode === "focus" ? "Focus" : (mode === "break" ? "Break" : "Lo
             const nextMode = isLong ? "long" : "break";
             setMode(nextMode);
             setRemaining((isLong ? settings.longBreakMin : settings.breakMin) * 60);
-            if (settings.autoStartNext) setRunning(true);
+            if (settings.autoStartNext) setTimeout(() => setRunning(true), 0);
           } else {
             // break finished -> back to focus
             setMode("focus");
@@ -641,7 +641,7 @@ const modeLabel = mode === "focus" ? "Focus" : (mode === "break" ? "Break" : "Lo
             focusAccumSecRef.current = 0;
             if (settings.autoStartNext) {
               startedAtRef.current = Date.now();
-              setRunning(true);
+              setTimeout(() => setRunning(true), 0);
             }
             }
         }
