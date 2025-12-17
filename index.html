@@ -32,21 +32,6 @@
     const { useEffect, useMemo, useRef, useState } = React;
 
     // ===========================
-    // Sound Assets (Base64 Beep)
-    // ===========================
-    const BEEP_SOUND = "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWgAAAA0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABYaW5nAAAAEAAAAAEAAABwAAIcHR8gISOkpKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKy//uQZAAAAAAAABAAAAAAAAAAAdJ8AAAAAAAAAAAAAAP/7kGQAAAAAAAABAAAAAAAAAAAdJ8AAAAAAAAAAAAAA//uQZAAAAAAAABAAAAAAAAAAAdJ8AAAAAAAAAAAAAA//uQZAAAAAAAABAAAAAAAAAAAdJ8AAAAAAAAAAAAAA//uQZAAAAAAAABAAAAAAAAAAAdJ8AAAAAAAAAAAAAA//uQZAAAAAAAABAAAAAAAAAAAdJ8AAAAAAAAAAAAAA//uQZAAAAAAAABAAAAAAAAAAAdJ8AAAAAAAAAAAAAA//uQZAAABiM8WAA08AAADI54sBp4AAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA//uQZAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA//uQZAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA//uQZAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA//uQZAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA//uQZAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA//uQZAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA//uQZAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA//uQZAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA//uQZAABjM8WAA08AAADI54sBp4AAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAAABpAAAACAAADSAAAA8AAANIAAADwAA";
-
-    const playNotification = () => {
-      try {
-        const audio = new Audio(BEEP_SOUND);
-        audio.volume = 1.0;
-        audio.play().catch(e => console.warn("Audio autoplay blocked by browser:", e));
-      } catch (e) {
-        console.error("Audio error", e);
-      }
-    };
-
-    // ===========================
     // Helpers
     // ===========================
     const uid = () => Math.random().toString(36).slice(2, 11);
@@ -493,7 +478,7 @@
       const tickRef = useRef(null);
       const focusAccumSecRef = useRef(0);
 
-      const modeLabel = mode === "focus" ? "Focus" : (mode === "break" ? "Break" : "Long Break");
+      const modeLabel = mode === "focus" ? "Focus" : (mode === "break" ? "Short Break" : "Long Break");
       const modeColor = mode === "focus" ? "bg-indigo-600" : (mode === "break" ? "bg-emerald-600" : "bg-teal-700");
 
       useEffect(() => {
@@ -503,11 +488,8 @@
       }, [remaining, running, modeLabel]);
 
       useEffect(() => {
-        // FIX: Chỉ reset khi mode hoặc settings thay đổi, KHÔNG reset khi đang pause (running=false)
         if (running) return;
         
-        // Nếu vừa pause, không được reset time
-        // Ở đây ta chỉ reset khi settings thay đổi thôi
         if (mode === "focus") setRemaining(settings.focusMin * 60);
         if (mode === "break") setRemaining(settings.breakMin * 60);
         if (mode === "long") setRemaining(settings.longBreakMin * 60);
@@ -519,33 +501,46 @@
       };
 
       const finalizeFocusIfNeeded = () => {
+        // Chỉ quan tâm khi ở chế độ focus
         if (mode !== "focus") {
           startedAtRef.current = null;
           focusAccumSecRef.current = 0;
           return;
         }
+        
         let elapsedSec = focusAccumSecRef.current || 0;
+        
+        // Nếu đang chạy hoặc vừa pause nhưng startedAtRef chưa null
         if (startedAtRef.current) {
           elapsedSec += Math.max(0, Math.round((Date.now() - startedAtRef.current) / 1000));
         }
-        if (elapsedSec <= 0) {
+
+        // === ANTI SPAM LOGIC ===
+        // Nếu tổng thời gian < 60 giây (1 phút), bỏ qua không log
+        if (elapsedSec < 60) {
           startedAtRef.current = null;
           focusAccumSecRef.current = 0;
-          return;
+          return; 
         }
-        const plannedSec = settings.focusMin * 60;
-        const effectiveSec = settings.countPartialFocus ? elapsedSec : (elapsedSec >= plannedSec ? plannedSec : 0);
-        const mins = Math.floor(effectiveSec / 60);
-        if (mins > 0) onAddFocusMinutes(mins, { type: "pomodoro", note: "Focus session" });
+
+        // Logic cũ
+        if (elapsedSec > 0) {
+            const plannedSec = settings.focusMin * 60;
+            const effectiveSec = settings.countPartialFocus ? elapsedSec : (elapsedSec >= plannedSec ? plannedSec : 0);
+            const mins = Math.floor(effectiveSec / 60);
+            if (mins > 0) onAddFocusMinutes(mins, { type: "pomodoro", note: "Focus session" });
+        }
+        
         startedAtRef.current = null;
         focusAccumSecRef.current = 0;
       };
 
       const setModeAndReset = (nextMode) => {
+        // Trước khi chuyển mode, nếu đang focus dở thì save lại
+        finalizeFocusIfNeeded(); 
+        
         setMode(nextMode);
         setRunning(false);
-        startedAtRef.current = null;
-        focusAccumSecRef.current = 0;
         stopTick();
         const sec = nextMode === "focus" ? settings.focusMin * 60 : (nextMode === "break" ? settings.breakMin * 60 : settings.longBreakMin * 60);
         setRemaining(sec);
@@ -572,10 +567,11 @@
       useEffect(() => {
         if (!running) return;
         if (remaining <= 0) {
-          playNotification();
+          // NO SOUND: Đã bỏ playNotification()
           setRunning(false);
           stopTick();
           if (mode === "focus") {
+            // Khi hết giờ tự nhiên thì luôn save (vì chắc chắn > 1 phút nếu settings chuẩn)
             onAddFocusMinutes(settings.focusMin, { type: "pomodoro", note: "Focus completed" });
             startedAtRef.current = null;
             focusAccumSecRef.current = 0;
@@ -616,17 +612,13 @@
       };
 
       const reset = () => {
-        if (running || startedAtRef.current) finalizeFocusIfNeeded();
+        // YÊU CẦU: Bấm Reset là tính luôn phút focus (nếu có) rồi mới reset
+        finalizeFocusIfNeeded();
+        
         const sec = mode === "focus" ? settings.focusMin * 60 : (mode === "break" ? settings.breakMin * 60 : settings.longBreakMin * 60);
         setRunning(false);
         stopTick();
         setRemaining(sec);
-      };
-
-      const stopAndCount = () => {
-        if (running || startedAtRef.current) finalizeFocusIfNeeded();
-        setRunning(false);
-        stopTick();
       };
 
       const progress = useMemo(() => {
@@ -712,19 +704,20 @@
             ) : (
               <button onClick={pause} className="px-4 py-3 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800">⏸ Tạm dừng</button>
             )}
-            <button onClick={reset} className="px-4 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 font-semibold">↺ Reset</button>
-
-            <button onClick={() => setModeAndReset("focus")} className="px-4 py-3 rounded-xl bg-indigo-50 hover:bg-indigo-100 font-semibold">Focus</button>
-            <button onClick={() => setModeAndReset("break")} className="px-4 py-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 font-semibold">Break</button>
-
-            <button onClick={() => setModeAndReset("long")} className="px-4 py-3 rounded-xl bg-teal-50 hover:bg-teal-100 font-semibold col-span-2">Long Break</button>
-            <button onClick={stopAndCount} className="px-4 py-3 rounded-xl bg-amber-50 hover:bg-amber-100 font-semibold col-span-2">
-              ⏹ Dừng & cộng phút focus (nếu có)
+            
+            <button onClick={reset} className="px-4 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 font-semibold text-slate-700">
+              ⏹ Reset
             </button>
+
+            <div className="col-span-2 flex gap-2">
+                <button onClick={() => setModeAndReset("focus")} className="flex-1 py-3 rounded-xl bg-indigo-50 hover:bg-indigo-100 font-semibold text-xs text-indigo-700">Focus</button>
+                <button onClick={() => setModeAndReset("break")} className="flex-1 py-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 font-semibold text-xs text-emerald-700">Short</button>
+                <button onClick={() => setModeAndReset("long")} className="flex-1 py-3 rounded-xl bg-teal-50 hover:bg-teal-100 font-semibold text-xs text-teal-700">Long</button>
+            </div>
           </div>
 
           <div className="mt-3 text-xs text-slate-500">
-            * Khi hết giờ, sẽ có <b>âm thanh báo</b> & app tự cộng <b>{settings.focusMin} phút</b>.
+            * Khi hết giờ hoặc bấm <b>Reset</b>, app sẽ tự cộng phút đã Focus (nếu > 1 phút).
           </div>
         </div>
       );
